@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- An open book with a cross, drawn inside the 66dp adaptive-icon safe zone. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- left page -->
+    <path
+        android:fillColor="#FFF6E7C8"
+        android:pathData="M53,38 C46,34 38,33 30,34 L30,72 C38,71 46,72 53,76 Z" />
+    <!-- right page -->
+    <path
+        android:fillColor="#FFF6E7C8"
+        android:pathData="M55,38 C62,34 70,33 78,34 L78,72 C70,71 62,72 55,76 Z" />
+    <!-- cross on right page -->
+    <path
+        android:fillColor="#FFC9A24B"
+        android:pathData="M65,42 h3 v6 h5 v3 h-5 v13 h-3 v-13 h-5 v-3 h5 z" />
+    <!-- text lines on left page -->
+    <path
+        android:fillColor="#FFB89A72"
+        android:pathData="M35,44 h13 v1.6 h-13 z M35,49 h13 v1.6 h-13 z M35,54 h13 v1.6 h-13 z M35,59 h13 v1.6 h-13 z M35,64 h10 v1.6 h-10 z" />
+</vector>
