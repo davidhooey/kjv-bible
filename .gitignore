@@ -8,3 +8,6 @@ local.properties
 *.jks
 *.keystore
 *.p12
+
+# Local working files for building the audio packs (venv, timings, zips)
+.audio-work/

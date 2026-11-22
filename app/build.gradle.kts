@@ -14,6 +14,8 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "1.0.0"
+        // Chapter recordings, one zip per voice and book (see tools/package_audio.py).
+        buildConfigField("String", "AUDIO_BASE_URL", "\"https://github.com/squished18/kjv-bible/releases/download/audio-v1\"")
     }
 
     // Release signing comes from Gradle properties kept outside the repo, e.g. in
@@ -43,6 +45,12 @@ android {
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
             signingConfig = signingConfigs.findByName("release")
         }
+        debug {
+            // Installs beside the release app, and fetches audio from a test server on the
+            // computer: `adb reverse tcp:8765 tcp:8765` plus a web server serving the zips.
+            applicationIdSuffix = ".debug"
+            buildConfigField("String", "AUDIO_BASE_URL", "\"http://127.0.0.1:8765\"")
+        }
     }
 
     compileOptions {
@@ -54,6 +62,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     androidResources {
         noCompress += "tsv"
@@ -71,6 +80,8 @@ dependencies {
     implementation("androidx.compose.foundation:foundation")
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material:material-icons-core")
+    implementation("androidx.media3:media3-exoplayer:1.5.1")
+    implementation("androidx.media3:media3-session:1.5.1")
     testImplementation("junit:junit:4.13.2")
     debugImplementation("androidx.compose.ui:ui-tooling")
     implementation("androidx.compose.ui:ui-tooling-preview")

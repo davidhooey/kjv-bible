@@ -20,6 +20,10 @@ class Prefs(context: Context) {
         get() = runCatching { ThemeMode.valueOf(sp.getString("theme", null) ?: "") }.getOrDefault(ThemeMode.SYSTEM)
         set(v) = sp.edit().putString("theme", v.name).apply()
 
+    var voice: Voice
+        get() = Voice.fromId(sp.getString("voice", null)) ?: Voice.BELLA
+        set(v) = sp.edit().putString("voice", v.id).apply()
+
     var bookmarks: Set<VerseRef>
         get() = sp.getStringSet("bookmarks", emptySet())!!.mapNotNull { VerseRef.fromKey(it) }.toSet()
         set(v) = sp.edit().putStringSet("bookmarks", v.map { it.key() }.toSet()).apply()

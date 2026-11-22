@@ -18,7 +18,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -30,18 +34,25 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.materialIcon
+import androidx.compose.material.icons.materialPath
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -57,7 +68,11 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
@@ -73,6 +88,7 @@ import androidx.compose.ui.unit.sp
 import io.github.squished18.kjvbible.data.Bible
 import io.github.squished18.kjvbible.data.ThemeMode
 import io.github.squished18.kjvbible.data.VerseRef
+import io.github.squished18.kjvbible.data.Voice
 import io.github.squished18.kjvbible.ui.theme.ScriptureFont
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -136,6 +152,7 @@ fun ReaderScreen(vm: AppViewModel, bible: Bible) {
                 SelectionBar(vm, bible, selected, onDone = { selected = emptySet() })
             }
         },
+        bottomBar = { AudioBar(vm, bible) },
     ) { padding ->
         HorizontalPager(
             state = pagerState,
@@ -198,6 +215,21 @@ private fun ChapterPage(
         }
     }
 
+    // Keep the verse being read aloud in view, but only while the reader is following it: if they
+    // have scrolled away from the previous verse, leave them where they are.
+    val playing = vm.audio.nowPlaying?.takeIf { it.book == book && it.chapter == chapter }?.verse
+    var lastPlaying by remember { mutableStateOf<Int?>(null) }
+    LaunchedEffect(playing) {
+        if (playing != null) {
+            val visible = listState.layoutInfo.visibleItemsInfo
+            val viewEnd = listState.layoutInfo.viewportEndOffset
+            fun fullyVisible(item: Int) = visible.any { it.index == item && it.offset >= 0 && it.offset + it.size <= viewEnd }
+            val following = lastPlaying == null || visible.any { it.index == lastPlaying }
+            if (following && !fullyVisible(playing)) listState.animateScrollToItem(if (playing > 1) playing - 1 else 0)
+        }
+        lastPlaying = playing
+    }
+
     LazyColumn(
         state = listState,
         modifier = Modifier.fillMaxSize(),
@@ -240,6 +272,7 @@ private fun ChapterPage(
                 isSelected = ref in selected,
                 isBookmarked = ref in vm.bookmarks,
                 isHighlighted = highlight == i + 1,
+                isNowPlaying = playing == i + 1,
                 onClick = { onVerseClick(ref) },
             )
         }
@@ -273,12 +306,13 @@ private fun VerseRow(
     isSelected: Boolean,
     isBookmarked: Boolean,
     isHighlighted: Boolean,
+    isNowPlaying: Boolean,
     onClick: () -> Unit,
 ) {
     val colors = MaterialTheme.colorScheme
     val target = when {
         isSelected -> colors.primaryContainer
-        isHighlighted -> colors.secondaryContainer
+        isHighlighted || isNowPlaying -> colors.secondaryContainer
         isBookmarked -> colors.secondaryContainer.copy(alpha = 0.55f)
         else -> Color.Transparent
     }
@@ -304,6 +338,10 @@ private fun VerseRow(
             .fillMaxWidth()
             .clip(RoundedCornerShape(8.dp))
             .background(bg)
+            .drawBehind {
+                // A bar down the left edge marks the verse being read aloud.
+                if (isNowPlaying) drawRect(numberColor, size = Size(4.dp.toPx(), size.height))
+            }
             .clickable(onClick = onClick)
             .padding(horizontal = 8.dp, vertical = 5.dp),
         fontFamily = ScriptureFont,
@@ -325,8 +363,11 @@ private fun SelectionBar(vm: AppViewModel, bible: Bible, selected: Set<VerseRef>
         navigationIcon = {
             IconButton(onClick = onDone) { Icon(Icons.Filled.Close, contentDescription = "Clear selection") }
         },
-        title = { Text("${sorted.size} selected") },
+        title = { Text("${sorted.size} selected", maxLines = 1) },
         actions = {
+            IconButton(onClick = { vm.playFrom(sorted.first()); onDone() }) {
+                Icon(Icons.Filled.PlayArrow, contentDescription = "Play from verse ${sorted.first().verse}")
+            }
             TextButton(onClick = { vm.toggleBookmarks(sorted); onDone() }) {
                 Text(if (allMarked) "Unmark" else "Bookmark")
             }
@@ -337,14 +378,14 @@ private fun SelectionBar(vm: AppViewModel, bible: Bible, selected: Set<VerseRef>
                 }
                 onDone()
             }) { Text("Copy") }
-            TextButton(onClick = {
+            IconButton(onClick = {
                 val send = Intent(Intent.ACTION_SEND).apply {
                     type = "text/plain"
                     putExtra(Intent.EXTRA_TEXT, formatPassage(bible, sorted))
                 }
                 context.startActivity(Intent.createChooser(send, null))
                 onDone()
-            }) { Text("Share") }
+            }) { Icon(Icons.Filled.Share, contentDescription = "Share") }
         },
     )
 }
@@ -390,6 +431,7 @@ private fun ReadingSettings(vm: AppViewModel) {
     Column(
         Modifier
             .fillMaxWidth()
+            .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp)
             .padding(bottom = 32.dp),
     ) {
@@ -423,6 +465,113 @@ private fun ReadingSettings(vm: AppViewModel) {
                     label = { Text(label) },
                 )
             }
+        }
+        Spacer(Modifier.height(24.dp))
+        Text("Reading voice", style = MaterialTheme.typography.titleMedium)
+        Voice.entries.forEach { v ->
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    .selectable(selected = vm.voice == v, role = Role.RadioButton, onClick = { vm.updateVoice(v) })
+                    .padding(vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                RadioButton(selected = vm.voice == v, onClick = null)
+                Spacer(Modifier.width(8.dp))
+                Text(v.label, style = MaterialTheme.typography.bodyLarge)
+                Spacer(Modifier.width(8.dp))
+                Text(v.description, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+        // The player bar is hidden behind this sheet, so show download progress and errors here too.
+        val download = vm.audio.download
+        val error = vm.audio.error
+        when {
+            download != null -> {
+                Text(
+                    "Downloading ${vm.bible?.books?.getOrNull(download.book)?.name ?: ""} (${download.voice.label})… " +
+                        "${(download.progress * 100).toInt()}%",
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                LinearProgressIndicator(progress = { download.progress }, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp))
+            }
+            error != null -> Text(error, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+            else -> Text(
+                "Audio downloads one book at a time the first time you play it.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        val bytes = vm.audio.downloadedBytes
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                "Downloaded audio: " + if (bytes == 0L) "none" else "%.0f MB".format(bytes / 1_000_000.0),
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.weight(1f),
+            )
+            TextButton(onClick = { vm.audio.deleteAll() }, enabled = bytes > 0) { Text("Delete") }
+        }
+    }
+}
+
+/** Player controls under the reader while a book is downloading or playing. */
+@Composable
+private fun AudioBar(vm: AppViewModel, bible: Bible) {
+    val audio = vm.audio
+    val download = audio.download
+    val playing = audio.nowPlaying
+    val error = audio.error
+    if (download == null && playing == null && error == null) return
+    Surface(tonalElevation = 3.dp, shadowElevation = 3.dp) {
+        Column(Modifier.navigationBarsPadding()) {
+            if (download != null) LinearProgressIndicator(progress = { download.progress }, modifier = Modifier.fillMaxWidth())
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, end = 4.dp, top = 6.dp, bottom = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(
+                    Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable(enabled = playing != null && download == null) { playing?.let { vm.goTo(it) } },
+                ) {
+                    val (title, subtitle) = when {
+                        download != null -> "Downloading ${bible.books[download.book].name}…" to
+                            "${download.voice.label} · ${(download.progress * 100).toInt()}%"
+                        error != null -> "Audio unavailable" to error
+                        else -> bible.label(playing!!) to (audio.nowPlayingVoice?.label ?: "")
+                    }
+                    Text(title, style = MaterialTheme.typography.titleSmall, fontFamily = ScriptureFont, maxLines = 1)
+                    Text(
+                        subtitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 2,
+                    )
+                }
+                if (download == null && error == null) {
+                    IconButton(onClick = { audio.togglePause() }) {
+                        if (audio.isPlaying) Icon(PauseIcon, contentDescription = "Pause")
+                        else Icon(Icons.Filled.PlayArrow, contentDescription = "Play")
+                    }
+                }
+                IconButton(onClick = { audio.stop() }) {
+                    Icon(Icons.Filled.Close, contentDescription = if (download != null) "Cancel download" else "Stop")
+                }
+            }
+        }
+    }
+}
+
+/** Material "pause" (not in the core icon set). */
+private val PauseIcon: ImageVector by lazy {
+    materialIcon(name = "Filled.Pause") {
+        materialPath {
+            moveTo(6f, 19f); horizontalLineToRelative(4f); verticalLineTo(5f); horizontalLineTo(6f); close()
+            moveTo(14f, 5f); verticalLineToRelative(14f); horizontalLineToRelative(4f); verticalLineTo(5f); close()
         }
     }
 }

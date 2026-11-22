@@ -11,6 +11,7 @@ import io.github.squished18.kjvbible.data.Prefs
 import io.github.squished18.kjvbible.data.SearchHit
 import io.github.squished18.kjvbible.data.ThemeMode
 import io.github.squished18.kjvbible.data.VerseRef
+import io.github.squished18.kjvbible.data.Voice
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -52,6 +53,19 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         private set
     private var searchJob: Job? = null
 
+    var voice by mutableStateOf(prefs.voice)
+        private set
+    val audio = AudioController(app, viewModelScope) { bible }.apply {
+        // When playback moves on to the next chapter, turn the page too if the reader was on the
+        // chapter being played.
+        onChapterChange = { from, to ->
+            if (from != null && position.book == from.book && position.chapter == from.chapter) {
+                position = VerseRef(to.book, to.chapter)
+                prefs.lastPosition = position
+            }
+        }
+    }
+
     init {
         viewModelScope.launch {
             try {
@@ -90,6 +104,21 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun updateTheme(mode: ThemeMode) {
         themeMode = mode
         prefs.themeMode = mode
+    }
+
+    fun updateVoice(v: Voice) {
+        if (v == voice) return
+        voice = v
+        prefs.voice = v
+        // Switch voices in place if something is playing.
+        val at = audio.nowPlaying
+        if (at != null && audio.isPlaying) audio.playFrom(at, v)
+    }
+
+    fun playFrom(ref: VerseRef) = audio.playFrom(ref, voice)
+
+    override fun onCleared() {
+        audio.release()
     }
 
     fun toggleBookmarks(refs: Collection<VerseRef>) {
