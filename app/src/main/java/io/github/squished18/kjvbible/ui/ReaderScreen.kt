@@ -1,4 +1,4 @@
-package com.kjvreader.app.ui
+package io.github.squished18.kjvbible.ui
 
 import android.content.Intent
 import android.os.Build
@@ -70,10 +70,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.kjvreader.app.data.Bible
-import com.kjvreader.app.data.ThemeMode
-import com.kjvreader.app.data.VerseRef
-import com.kjvreader.app.ui.theme.ScriptureFont
+import io.github.squished18.kjvbible.data.Bible
+import io.github.squished18.kjvbible.data.ThemeMode
+import io.github.squished18.kjvbible.data.VerseRef
+import io.github.squished18.kjvbible.ui.theme.ScriptureFont
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 

@@ -1,4 +1,4 @@
-package com.kjvreader.app.data
+package io.github.squished18.kjvbible.data
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull

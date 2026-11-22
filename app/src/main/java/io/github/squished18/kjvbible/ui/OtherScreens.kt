@@ -1,4 +1,4 @@
-package com.kjvreader.app.ui
+package io.github.squished18.kjvbible.ui
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
@@ -58,11 +58,11 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import com.kjvreader.app.data.Bible
-import com.kjvreader.app.data.Book
-import com.kjvreader.app.data.OLD_TESTAMENT_COUNT
-import com.kjvreader.app.data.VerseRef
-import com.kjvreader.app.ui.theme.ScriptureFont
+import io.github.squished18.kjvbible.data.Bible
+import io.github.squished18.kjvbible.data.Book
+import io.github.squished18.kjvbible.data.OLD_TESTAMENT_COUNT
+import io.github.squished18.kjvbible.data.VerseRef
+import io.github.squished18.kjvbible.ui.theme.ScriptureFont
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

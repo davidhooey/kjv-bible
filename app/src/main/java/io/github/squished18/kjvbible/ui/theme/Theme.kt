@@ -1,4 +1,4 @@
-package com.kjvreader.app.ui.theme
+package io.github.squished18.kjvbible.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme
@@ -9,7 +9,7 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
-import com.kjvreader.app.data.ThemeMode
+import io.github.squished18.kjvbible.data.ThemeMode
 
 private val Burgundy = Color(0xFF7A2E22)
 private val Gold = Color(0xFFB8893A)

@@ -5,15 +5,35 @@ plugins {
 }
 
 android {
-    namespace = "com.kjvreader.app"
+    namespace = "io.github.squished18.kjvbible"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.kjvreader.app"
+        applicationId = "io.github.squished18.kjvbible"
         minSdk = 26
         targetSdk = 35
         versionCode = 1
-        versionName = "1.0"
+        versionName = "1.0.0"
+    }
+
+    // Release signing comes from Gradle properties kept outside the repo, e.g. in
+    // ~/.gradle/gradle.properties (see tools/create-release-key.sh):
+    //   kjvbible.keystore=/path/to/kjvbible-release.p12
+    //   kjvbible.keyAlias=kjvbible
+    //   kjvbible.storePassword=...
+    // Without them, assembleRelease produces an unsigned APK.
+    val keystorePath = providers.gradleProperty("kjvbible.keystore").orNull
+    signingConfigs {
+        if (keystorePath != null) {
+            create("release") {
+                storeFile = file(keystorePath)
+                storeType = "PKCS12"
+                storePassword = providers.gradleProperty("kjvbible.storePassword").get()
+                keyAlias = providers.gradleProperty("kjvbible.keyAlias").orElse("kjvbible").get()
+                // PKCS12 keystores use the same password for the key.
+                keyPassword = storePassword
+            }
+        }
     }
 
     buildTypes {
@@ -21,8 +41,7 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
-            // Signed with the debug key so the release APK installs for testing.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.findByName("release")
         }
     }
 

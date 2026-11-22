@@ -1,4 +1,4 @@
-package com.kjvreader.app.data
+package io.github.squished18.kjvbible.data
 
 import android.content.Context
 

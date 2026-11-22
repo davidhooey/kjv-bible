@@ -1,4 +1,4 @@
-package com.kjvreader.app
+package io.github.squished18.kjvbible
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -22,14 +22,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
-import com.kjvreader.app.ui.AppViewModel
-import com.kjvreader.app.ui.BookmarksScreen
-import com.kjvreader.app.ui.BooksScreen
-import com.kjvreader.app.ui.ReaderScreen
-import com.kjvreader.app.ui.Screen
-import com.kjvreader.app.ui.SearchScreen
-import com.kjvreader.app.ui.theme.KjvTheme
-import com.kjvreader.app.ui.theme.isDarkTheme
+import io.github.squished18.kjvbible.ui.AppViewModel
+import io.github.squished18.kjvbible.ui.BookmarksScreen
+import io.github.squished18.kjvbible.ui.BooksScreen
+import io.github.squished18.kjvbible.ui.ReaderScreen
+import io.github.squished18.kjvbible.ui.Screen
+import io.github.squished18.kjvbible.ui.SearchScreen
+import io.github.squished18.kjvbible.ui.theme.KjvTheme
+import io.github.squished18.kjvbible.ui.theme.isDarkTheme
 
 class MainActivity : ComponentActivity() {
     private val vm: AppViewModel by viewModels()

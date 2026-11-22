@@ -22,7 +22,16 @@ or `ANDROID_HOME` set:
 ./gradlew testDebugUnitTest    # unit tests against the bundled text
 ```
 
-The release build is signed with the debug key so it can be sideloaded for testing.
+Release builds are signed with a key kept outside the repo. Run `tools/create-release-key.sh`
+once to create it; it records the key's location and password in `~/.gradle/gradle.properties`.
+Without that, `assembleRelease` produces an unsigned APK.
+
+## Installing
+
+Download `kjv-bible-<version>.apk` from the
+[Releases](https://github.com/squished18/kjv-bible/releases) page and open it on your phone
+(allow installs from that app when Android asks). Each release lists the APK's SHA-256 checksum
+and the signing certificate's fingerprint so you can check the download.
 
 `tools/setup-vm.sh` sets up a fresh Ubuntu 24.04 machine (JDK, Android command-line tools, Gradle).
 

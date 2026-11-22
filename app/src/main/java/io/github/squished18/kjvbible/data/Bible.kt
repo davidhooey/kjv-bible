@@ -1,4 +1,4 @@
-package com.kjvreader.app.data
+package io.github.squished18.kjvbible.data
 
 /** The 66 books of the KJV protocanon, in canonical order. Index 0 = Genesis. */
 val BOOK_NAMES = listOf(
