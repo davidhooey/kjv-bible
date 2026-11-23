@@ -5,7 +5,8 @@ on:
   pull_request:
 
 jobs:
-  build:
+  build-and-test:
+    name: Build and test
     runs-on: ubuntu-latest
 
     steps:
@@ -21,5 +22,8 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Build and run unit tests
-        run: ./gradlew testDebugUnitTest assembleDebug assembleRelease
+      - name: Run unit tests
+        run: ./gradlew testDebugUnitTest
+
+      - name: Build debug and release APKs
+        run: ./gradlew assembleDebug assembleRelease
