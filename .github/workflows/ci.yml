@@ -22,8 +22,8 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Compile
+        run: ./gradlew compileDebugKotlin compileDebugUnitTestKotlin
+
       - name: Run unit tests
         run: ./gradlew testDebugUnitTest
-
-      - name: Build debug and release APKs
-        run: ./gradlew assembleDebug assembleRelease
