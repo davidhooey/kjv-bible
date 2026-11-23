@@ -12,8 +12,8 @@ android {
         applicationId = "io.github.squished18.kjvbible"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.1.0"
         // Chapter recordings, one zip per voice and book (see tools/package_audio.py).
         buildConfigField("String", "AUDIO_BASE_URL", "\"https://github.com/squished18/kjv-bible/releases/download/audio-v1\"")
     }
